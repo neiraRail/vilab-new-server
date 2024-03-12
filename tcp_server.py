@@ -2,6 +2,7 @@ import socket
 import time
 import utils.rtp as rtp
 from utils.db import Saver
+from utils.reloj import Reloj
 
 
 def start_server(host, port):
@@ -25,8 +26,8 @@ def start_server(host, port):
         client_socket, client_address = server_socket.accept()
         print(f"Accepted connection from {client_address[0]}:{client_address[1]}")
 
-        clock = time.time_ns()
-        packet_ps = 0
+        reloj = Reloj()
+
         data = b''
         size = 56
 
@@ -45,19 +46,14 @@ def start_server(host, port):
                 continue
 
             while counter+size <= len(data):
-                
-                if time.time_ns() - clock > 100000000:
-                    print("Packet per second: ", packet_ps)
-                    packet_ps = 0
-                    clock = time.time_ns()
+                reloj.mostrarFrecuencia()
                 
                 # print("Unpacking from byte ", counter, " to ", counter+size)
 
                 try:
                     unpacked_data = rtp.parseBytes(data[counter:counter+size])
                     saver.save(unpacked_data)
-                    time.sleep(0.5)
-                    packet_ps += 1
+                    reloj.aumentarContador()
                 except ValueError:
                     size += 1
                     continue
@@ -71,10 +67,8 @@ def start_server(host, port):
             data = data[counter:]
             print("Rest of the data: ", len(data))
 
-
-
-    # Close the client connection
-    client_socket.close()
+        # Close the client connection
+        client_socket.close()
 
     # Close the server socket
     server_socket.close()
