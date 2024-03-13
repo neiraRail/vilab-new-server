@@ -13,11 +13,11 @@ class Reloj:
         # Frencuencia en Hz
         frecuencia = self.contador/(end-self.start)
         frecuencia = frecuencia * 10**9
-        
+
         self.contador = 0
         self.start = time.time_ns()
 
-        print("Frecuencia: ", frecuencia)
+        print("Frecuencia: ", round(frecuencia))
 
         return frecuencia
     
