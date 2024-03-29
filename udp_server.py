@@ -45,4 +45,4 @@ def start_server(host, port):
     # No se cierra el socket en UDP, ya que no hay conexión establecida
 
 # Iniciar el servidor UDP
-start_server('localhost', 8080)
+start_server('0.0.0.0', 8080)
