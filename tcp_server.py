@@ -27,6 +27,7 @@ def start_server(host, port):
 
         # Accept a client connection
         client_socket, client_address = server_socket.accept()
+        client_socket.settimeout(10)
         print(f"Accepted connection from {client_address[0]}:{client_address[1]}")
         
         data = b''
@@ -35,18 +36,24 @@ def start_server(host, port):
         disconnect = False
         while not disconnect:
             # Receive data from the client
-            recieved_data = client_socket.recv(BUFFER_SIZE)
+            try:
+                recieved_data = client_socket.recv(BUFFER_SIZE)
+            except socket.timeout as e:
+                disconnect = True
+                continue
+
             if not recieved_data:
                 disconnect = True
                 continue
             
             data += recieved_data
-            print("Data received: ", len(data))
-            reloj.mostrarFrecuencia()
+            # print("Data received: ", len(data))
+            # reloj.mostrarFrecuencia()
             while DELIMITER in data:
                 packet, data = data.split(DELIMITER, 1)
                 try:
                     unpacked_data = rtp.parseBytes(packet)
+                    print("a")
                     saver.save(unpacked_data)
                     reloj.aumentarContador()
                 except Exception as e:
@@ -62,4 +69,4 @@ def start_server(host, port):
     server_socket.close()
 
 # Start the server
-start_server('localhost', 8080)
+start_server('0.0.0.0', 8080)
