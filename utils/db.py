@@ -1,5 +1,7 @@
 import pymongo
 
+BUFFER_SIZE = 1000
+
 class Saver:
     def __init__(self):
         self.buffer = []
@@ -14,7 +16,7 @@ class Saver:
         
         self.buffer.append(data)
 
-        if len(self.buffer) > 100:
+        if len(self.buffer) > BUFFER_SIZE:
             try:
                 self.db.insert_many(self.buffer)
             except:
