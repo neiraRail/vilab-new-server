@@ -19,7 +19,7 @@ def start_server(host, port):
 
     print(f"Server listening on {host}:{port}")
 
-    reloj = Reloj()
+    # reloj = Reloj()
 
     while True:
         data, client_address = server_socket.recvfrom(BUFFER_SIZE)
@@ -28,8 +28,8 @@ def start_server(host, port):
         if not data:
             continue
 
-        print("Data received: ", len(data))
-        reloj.mostrarFrecuencia()
+        # print("Data received: ", len(data))
+        # reloj.mostrarFrecuencia()
 
         # Manejo del delimitador
         packets = data.split(DELIMITER)
@@ -37,7 +37,7 @@ def start_server(host, port):
             try:
                 unpacked_data = parseBytes(packet)
                 saver.save(unpacked_data)
-                reloj.aumentarContador()
+                # reloj.aumentarContador()
             except Exception as e:
                 # Manejar excepciones
                 print(e)
