@@ -2,7 +2,6 @@ import socket
 import threading
 import utils.rtp as rtp
 from utils.db import Saver
-from utils.reloj import Reloj
 
 
 BUFFER_SIZE = 1024
@@ -15,7 +14,6 @@ def handle_client(client_socket, client_address):
 
     data = b''
     saver = Saver()
-    reloj = Reloj()
 
     disconnect = False
     while not disconnect:
@@ -32,14 +30,11 @@ def handle_client(client_socket, client_address):
             continue
         
         data += recieved_data
-        # print("Data received: ", len(data))
-        # reloj.mostrarFrecuencia()
         while DELIMITER in data:
             packet, data = data.split(DELIMITER, 1)
             try:
                 unpacked_data = rtp.parseBytes(packet)
                 saver.save(unpacked_data)
-                reloj.aumentarContador()
             except Exception as e:
                 # TODO: Add error handling, separate types of exceptions, at least in parse exceptions and save exceptions
                 print(e)
@@ -76,4 +71,4 @@ def start_server(host, port):
     server_socket.close()
 
 # Start the server
-start_server('0.0.0.0', 8080)
+start_server('0.0.0.0', 8081)

@@ -28,8 +28,6 @@ def start_server(host, port):
         if not data:
             continue
 
-        # print("Data received: ", len(data))
-        # reloj.mostrarFrecuencia()
 
         # Manejo del delimitador
         packets = data.split(DELIMITER)
@@ -37,7 +35,6 @@ def start_server(host, port):
             try:
                 unpacked_data = parseBytes(packet)
                 saver.save(unpacked_data)
-                # reloj.aumentarContador()
             except Exception as e:
                 # Manejar excepciones
                 print(e)
@@ -45,4 +42,4 @@ def start_server(host, port):
     # No se cierra el socket en UDP, ya que no hay conexión establecida
 
 # Iniciar el servidor UDP
-start_server('0.0.0.0', 8080)
+start_server('0.0.0.0', 8081)
