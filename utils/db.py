@@ -1,13 +1,14 @@
 import pymongo
+from os import environ as env
 
 BUFFER_SIZE = 1000
+mongohost = env.get("MONGO_HOST", "localhost")
 
 class Saver:
     def __init__(self):
         self.buffer = []
-        myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-        self.mydb = myclient["mydatabase"]
-        # self.db = self.mydb["lecturas"]
+        myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/")
+        self.mydb = myclient["inercial"]
         self._isNodeSet = False
     
 
