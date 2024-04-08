@@ -6,17 +6,23 @@ class Saver:
     def __init__(self):
         self.buffer = []
         myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-        mydb = myclient["mydatabase"]
-        self.db = mydb["lecturas"]
+        self.mydb = myclient["mydatabase"]
+        # self.db = self.mydb["lecturas"]
+        self._isNodeSet = False
     
 
     def save(self, data):
         if not self.validate(data):
             raise Exception("Invalid data")
         
+        if not self._isNodeSet:
+            self._isNodeSet = True
+            node = data['nd']
+            self.db = self.mydb[f"lecturas{node}"]
+        
         self.buffer.append(data)
 
-        if len(self.buffer) > BUFFER_SIZE:
+        if len(self.buffer) >= BUFFER_SIZE:
             try:
                 self.db.insert_many(self.buffer)
             except:
