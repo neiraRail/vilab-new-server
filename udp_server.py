@@ -9,7 +9,11 @@ DELIMITER = b'\n\n'
 
 def start_server(host, port):
     # Crear objeto Saver con conexión a base de datos
-    saver = Saver()
+    try:
+        saver = Saver()
+    except Exception as e:
+        print(e)
+        return
 
     # Crear un socket UDP
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

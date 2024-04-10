@@ -8,6 +8,12 @@ class Saver:
     def __init__(self):
         self.buffer = []
         myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/")
+        # Probar conexión
+        try:
+            myclient.server_info()
+        except pymongo.errors.ServerSelectionTimeoutError:
+            print("MongoDB no disponible")
+            raise Exception("MongoDB no disponible")
         self.mydb = myclient["inercial"]
         self._isNodeSet = False
     
