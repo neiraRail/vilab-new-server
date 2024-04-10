@@ -7,7 +7,13 @@ mongohost = env.get("MONGO_HOST", "localhost")
 class Saver:
     def __init__(self):
         self.buffer = []
-        myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/")
+        myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/", serverSelectionTimeoutMS=2000)
+        # Probar conexión
+        try:
+            myclient.server_info()
+        except pymongo.errors.ServerSelectionTimeoutError:
+            print("MongoDB no disponible")
+            raise Exception("MongoDB no disponible")
         self.mydb = myclient["inercial"]
         self._isNodeSet = False
     

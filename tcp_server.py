@@ -13,7 +13,12 @@ def handle_client(client_socket, client_address):
     client_socket.settimeout(10)
 
     data = b''
-    saver = Saver()
+    try:
+        saver = Saver()
+    except Exception as e:
+        print(e)
+        client_socket.close()
+        return
 
     disconnect = False
     while not disconnect:
