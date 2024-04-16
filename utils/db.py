@@ -19,8 +19,8 @@ class Saver:
     
 
     def save(self, data):
-        if not self.validate(data):
-            raise Exception("Invalid data")
+        # if not self.validate(data):
+        #     raise Exception("Invalid data")
         
         if not self._isNodeSet:
             self._isNodeSet = True
