@@ -1,42 +1,52 @@
 import pymongo
 from os import environ as env
 
-BUFFER_SIZE = 1000
+class InitException(Exception):
+    pass
+
+class SaveException(Exception):
+    pass
+
+
+BUFFER_SIZE = 100
 mongohost = env.get("MONGO_HOST", "localhost")
 
 class Saver:
     def __init__(self):
-        self.buffer = []
-        myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/", serverSelectionTimeoutMS=2000)
-        # Probar conexión
         try:
+            self.buffer = []
+            myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/", serverSelectionTimeoutMS=2000)
+            # Probar conexión
             myclient.server_info()
+
+            self.mydb = myclient["inercial"]
+            self._isNodeSet = False
         except pymongo.errors.ServerSelectionTimeoutError:
-            print("MongoDB no disponible")
-            raise Exception("MongoDB no disponible")
-        self.mydb = myclient["inercial"]
-        self._isNodeSet = False
+            raise InitException("MongoDB no disponible")
+        except BaseException as e:
+            raise InitException(f"Error al iniciar el objeto Saver: {e}")
     
 
     def save(self, data):
         # if not self.validate(data):
         #     raise Exception("Invalid data")
-        
-        if not self._isNodeSet:
-            self._isNodeSet = True
-            node = data['nd']
-            self.db = self.mydb[f"lecturas{node}"]
-        
-        self.buffer.append(data)
+        try:
+            if not self._isNodeSet:
+                self._isNodeSet = True
+                node = data['nd']
+                self.db = self.mydb[f"lecturas{node}"]
+            
+            # print(data["tm"])
+            # self.buffer.append(data) # por alguna razon tienen que estar en orden alrevez
+            self.buffer.insert(0, data)
 
-        if len(self.buffer) >= BUFFER_SIZE:
-            try:
+            if len(self.buffer) >= BUFFER_SIZE:
                 self.db.insert_many(self.buffer)
-            except:
-                print("Error saving data")
-            else:
                 self.buffer = []
-        return True
+                
+            return True
+        except BaseException as e:
+            raise SaveException(f"Error al guardar los datos: {e}")
 
     def validate(self, data):
         if not isinstance(data, dict):
