@@ -47,6 +47,16 @@ class Saver:
             return True
         except BaseException as e:
             raise SaveException(f"Error al guardar los datos: {e}")
+        
+    def send_buffer(self):
+        # Send whats left in the buffer if there is any
+        try:
+            if len(self.buffer) > 0:
+                self.db.insert_many(self.buffer)
+                self.buffer = []
+        except BaseException as e:
+            raise SaveException(f"Error al guardar los datos restantes: {e}")
+
 
     def validate(self, data):
         if not isinstance(data, dict):

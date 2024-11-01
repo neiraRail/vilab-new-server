@@ -67,7 +67,15 @@ def handle_client(client_socket, client_address):
                 print("Datos invalidos")
                 disconnect = True
                 break
-
+    
+    # Force send whats left in the buffer
+    try:
+        saver.send_buffer()
+    except db.SaveException as e:
+        print(f"Ocurrió un error al enviar el buffer: {e}")
+    except BaseException as e:
+        print(f"Otro error ha ocurrido: {e}")
+    
     # Close the client connection
     client_socket.close()
 
