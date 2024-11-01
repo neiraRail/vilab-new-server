@@ -15,11 +15,11 @@ class Saver:
     def __init__(self):
         try:
             self.buffer = []
-            myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/", serverSelectionTimeoutMS=2000)
+            self.myclient = pymongo.MongoClient(f"mongodb://{mongohost}:27017/", serverSelectionTimeoutMS=2000)
             # Probar conexión
-            myclient.server_info()
+            self.myclient.server_info()
 
-            self.mydb = myclient["inercial"]
+            self.mydb = self.myclient["inercial"]
             self._isNodeSet = False
         except pymongo.errors.ServerSelectionTimeoutError:
             raise InitException("MongoDB no disponible")
@@ -56,6 +56,9 @@ class Saver:
                 self.buffer = []
         except BaseException as e:
             raise SaveException(f"Error al guardar los datos restantes: {e}")
+        
+    def close(self):
+        self.myclient.close()
 
 
     def validate(self, data):

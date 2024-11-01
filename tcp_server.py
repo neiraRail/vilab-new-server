@@ -1,4 +1,5 @@
 import socket
+import signal
 import threading
 import utils.rtp as rtp
 import utils.db as db
@@ -27,87 +28,97 @@ def handle_client(client_socket, client_address):
 
     disconnect = False
     intentos = 0
-    while not disconnect:
-        intentos += 1
-        # Receive data from the client
-        try:
-            recieved_data = client_socket.recv(BUFFER_SIZE)
-        except socket.timeout as e:
-            if intentos > 5:
-                disconnect = True
-                print("Se desconecta por timeout")
-            continue
-
-        if not recieved_data:
-            disconnect = True
-            continue
-        
-        data += recieved_data
-        while len(data) >= PACKET_LENGTH:
-            packet = data[:PACKET_LENGTH]
-            data = data[PACKET_LENGTH:]
-
-            if packet[-2:] == DELIMITER:
-                try:
-                    unpacked_data = rtp.parseBytes(packet[:-2])
-                    saver.save(unpacked_data)
-                except rtp.ParseException as e:
-                    print(f"Ocurrió un error de parseo: {e}")
-                    disconnect = True
-                    break
-                except db.SaveException as e:
-                    print(f"Ocurrió de guardado: {e}")
-                    disconnect = True
-                    break
-                except BaseException as e:
-                    print(f"Un error extraño ocurrió: {e}")
-                    disconnect = True
-                    break
-            else:
-                print("Datos invalidos")
-                disconnect = True
-                break
-    
-    # Force send whats left in the buffer
     try:
+        while not disconnect:
+            # Receive data from the client
+            try:
+                recieved_data = client_socket.recv(BUFFER_SIZE)
+                if not recieved_data:
+                    disconnect = True
+                    continue
+                
+                data += recieved_data
+                intentos = 0
+            except socket.timeout as e:
+                intentos += 1
+                if intentos > 5:
+                    disconnect = True
+                    print("Se desconecta por timeout")
+                continue
+
+            
+            while len(data) >= PACKET_LENGTH:
+                packet = data[:PACKET_LENGTH]
+                data = data[PACKET_LENGTH:]
+
+                if packet[-2:] == DELIMITER:
+                    try:
+                        unpacked_data = rtp.parseBytes(packet[:-2])
+                        saver.save(unpacked_data)
+                    except rtp.ParseException as e:
+                        print(f"Ocurrió un error de parseo: {e}")
+                        disconnect = True
+                        break
+                    except db.SaveException as e:
+                        print(f"Ocurrió de guardado: {e}")
+                        disconnect = True
+                        break
+                    except BaseException as e:
+                        print(f"Un error extraño ocurrió: {e}")
+                        disconnect = True
+                        break
+                else:
+                    print("Datos invalidos")
+                    disconnect = True
+                    break
+        
+        # Force send whats left in the buffer
+        
         saver.send_buffer()
     except db.SaveException as e:
         print(f"Ocurrió un error al enviar el buffer: {e}")
     except BaseException as e:
         print(f"Otro error ha ocurrido: {e}")
-    
-    # Close the client connection
-    client_socket.close()
+    finally:
+        # Cierre ordenado de recursos
+        client_socket.close()
+        saver.close()
+        print(f"Conexión cerrada para {client_address[0]}:{client_address[1]}")
 
 
 
 def start_server(host, port):    
-    # Create a TCP socket
+    # Crear socket de servidor
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Bind the socket to a specific address and port
     server_socket.bind((host, port))
-
-    # Listen for incoming connections
     server_socket.listen(1)
+    print(f"Server listening on {host}:{port}")
 
-    shutdown = False
-    while not shutdown:
-        print(f"Server listening on {host}:{port}")
+    shutdown = threading.Event()
 
-        # Accept a client connection
-        client_socket, client_address = server_socket.accept()
+    def signal_handler(sig, frame):
+        print("\nRecibido SIGINT, cerrando el servidor...")
+        shutdown.set()
 
-        thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
-        thread.daemon = True
-        thread.start()
+    # Captura de señal para cierre ordenado
+    signal.signal(signal.SIGINT, signal_handler)
 
-
-        
-        
-
-    # Close the server socket
-    server_socket.close()
+    try:
+        while not shutdown.is_set():
+            try:
+                client_socket, client_address = server_socket.accept()
+                thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
+                thread.daemon = True
+                thread.start()
+            except socket.error as e:
+                if shutdown.is_set():
+                    break  # Salir del bucle si el servidor está en proceso de cierre
+                print(f"Error al aceptar conexión: {e}")
+    
+    finally:
+        # Cerrar el socket del servidor al finalizar
+        server_socket.close()
+        print("Servidor cerrado")
 
 # Start the server
 start_server('0.0.0.0', 8081)
