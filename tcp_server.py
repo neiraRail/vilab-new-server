@@ -51,6 +51,11 @@ def handle_client(client_socket, client_address):
                 packet = data[:PACKET_LENGTH]
                 data = data[PACKET_LENGTH:]
 
+                if packet[0:5] == b'SSSSS':
+                    print("Notificación de apagado recibida del cliente.")
+                    saver.send_buffer()
+                    break
+
                 if packet[-2:] == DELIMITER:
                     try:
                         unpacked_data = rtp.parseBytes(packet[:-2])
@@ -73,7 +78,6 @@ def handle_client(client_socket, client_address):
                     break
         
         # Force send whats left in the buffer
-        
         saver.send_buffer()
     except db.SaveException as e:
         print(f"Ocurrió un error al enviar el buffer: {e}")
